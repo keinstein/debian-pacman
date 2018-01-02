@@ -1,4 +1,4 @@
-arch-pacman (5.0.2-1.1) UNRELEASED; urgency=medium
+arch-pacman (5.0.2-1.1) unstable; urgency=medium
 
   * Adapt configuration files according to arch linux package
 
