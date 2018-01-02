@@ -1,0 +1,15 @@
+Source: arch-pacman
+Section: admin
+Priority: optional
+Maintainer: Tobias Schlemmer <keinstein@users.berlios.de>
+Build-Depends: debhelper (>= 9), autotools-dev, libgpgme-dev, libcurl4-gnutls-dev, libarchive-dev, asciidoc, fakechroot
+Standards-Version: 4.1.1
+Homepage: https://git.archlinux.org/svntogit/packages.git/tree/pacman/trunk
+#Vcs-Git: https://anonscm.debian.org/collab-maint/arch-pacman.git
+#Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/arch-pacman.git
+
+Package: arch-pacman
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A library-based package manager with dependency support
+ This package provides the arch linux package manager

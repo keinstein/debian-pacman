@@ -1,0 +1,5 @@
+arch-pacman (5.0.2-1) unstable; urgency=medium
+
+  * Initial release
+
+ -- Tobias Schlemmer <keinstein@users.berlios.de>  Sun, 31 Dec 2017 12:46:48 +0100

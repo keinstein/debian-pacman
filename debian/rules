@@ -1,0 +1,75 @@
+#!/usr/bin/make -f
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+#export DH_VERBOSE = 1
+
+pkgdir = "$(CURDIR)/debian/arch-pacman"
+
+# see FEATURE AREAS in dpkg-buildflags(1)
+#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# see ENVIRONMENT in dpkg-buildflags(1)
+# package maintainers to append CFLAGS
+#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+# package maintainers to append LDFLAGS
+#export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+
+%:
+	dh $@ #--with autotools_dev
+
+
+# dh_make generated override targets
+# This is example for Cmake (See https://bugs.debian.org/641051 )
+#override_dh_auto_configure:
+#	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
+
+override_dh_auto_configure:
+	echo "---------------"
+	echo "$(.VARIABLES)"
+	echo "---------------"
+	env
+	echo package: $(PACKAGE)
+	echo "---------------"
+	dh_auto_configure -- --prefix=/usr \
+	    --bindir=/usr/lib/arch-linux \
+	    --datadir=/usr/share/arch-linux \
+	    --sysconfdir=/etc \
+	    --localstatedir=/var --enable-doc \
+	    --with-scriptlet-shell=/bin/bash \
+	    --with-ldconfig=/sbin/ldconfig
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f test/pacman/*.pyc
+	rm -f build-aux/config.guess.dh-orig
+	rm -f build-aux/config.sub.dh-orig
+	rm -rf debian/arch-pacman
+
+override_dh_auto_build:
+	dh_auto_build
+	dh_auto_build -- -C contrib
+
+override_dh_install:
+	make DESTDIR="$(CURDIR)/debian/arch-pacman" install
+	make DESTDIR="$(CURDIR)/debian/arch-pacman" -C contrib install
+
+	#install -m644 "$(CURDIR)/pacman.conf.$(DEB_HOST_MULTIARCH)" $(CURDIR)/debian/arch-pacman/etc/pacman.conf
+	#install -m644 "$(CURDIR)/makepkg.conf" "$(pkgdir)/etc"
+	sed -i "$(pkgdir)/etc/makepkg.conf" \
+	    -e "s|@CARCH[@]|$(shell echo $(DEB_TARGET_GNU_CPU)|sed -e 's/_/-/g')|g" \
+	    -e "s|@CHOST[@]|$(DEB_TARGET_MULTIARCH)|g" \
+	    -e "s|@CARCHFLAGS[@]|$(DEB_TARGET_ARCH_FLAGS)|g"
+	# DEB_TARGET_ARCH_FLAGS IS NOT SET
+	# put bash_completion in the right location
+	install -dm755 "$(pkgdir)/usr/share/bash-completion/completions"
+	mv "$(pkgdir)/etc/bash_completion.d/pacman" "$(pkgdir)/usr/share/bash-completion/completions"
+	rmdir "$(pkgdir)/etc/bash_completion.d"
+
+	#	for f in makepkg pacman-key; do \
+	#    ln -s pacman "$(pkgdir)/usr/share/bash-completion/completions/$f"; \
+	#done
+
+	install -Dm644 contrib/PKGBUILD.vim "$(pkgdir)/usr/share/vim/vimfiles/syntax/PKGBUILD.vim"
+
+	sed -i "/dependency_libs/ s/'.*'/''/" "$(CURDIR)/debian/arch-pacman/usr/lib/x86_64-linux-gnu/libalpm.la"
