@@ -1,0 +1,102 @@
+From 65b608a2f6ca8641d474ce1d62142178d6183cb2 Mon Sep 17 00:00:00 2001
+From: Tobias Schlemmer <keinstein@users.sourceforge.net>
+Date: Tue, 2 Jan 2018 13:50:25 +0100
+Subject: Adapt configuration files according to arch linux
+
+---
+ etc/makepkg.conf.in | 22 ++++++++++++----------
+ etc/pacman.conf.in  | 34 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 46 insertions(+), 10 deletions(-)
+
+diff --git a/etc/makepkg.conf.in b/etc/makepkg.conf.in
+index 93608e6..8d98bcf 100644
+--- a/etc/makepkg.conf.in
++++ b/etc/makepkg.conf.in
+@@ -8,9 +8,9 @@
+ #
+ #-- The download utilities that makepkg should use to acquire sources
+ #  Format: 'protocol::agent'
+-DLAGENTS=('ftp::/usr/bin/curl -gqfC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u'
+-          'http::/usr/bin/curl -gqb "" -fLC - --retry 3 --retry-delay 3 -o %o %u'
+-          'https::/usr/bin/curl -gqb "" -fLC - --retry 3 --retry-delay 3 -o %o %u'
++DLAGENTS=('ftp::/usr/bin/curl -fC - --ftp-pasv --retry 3 --retry-delay 3 -o %o %u'
++          'http::/usr/bin/curl -fLC - --retry 3 --retry-delay 3 -o %o %u'
++          'https::/usr/bin/curl -fLC - --retry 3 --retry-delay 3 -o %o %u'
+           'rsync::/usr/bin/rsync --no-motd -z %u %o'
+           'scp::/usr/bin/scp -C %u %o')
+ 
+@@ -34,15 +34,17 @@ CARCH="@CARCH@"
+ CHOST="@CHOST@"
+ 
+ #-- Compiler and Linker Flags
+-#CPPFLAGS=""
+-#CFLAGS="-O2 -pipe"
+-#CXXFLAGS="-O2 -pipe"
+-#LDFLAGS=""
++# -march (or -mcpu) builds exclusively for an architecture
++# -mtune optimizes for an architecture, but builds for whole processor family
++CPPFLAGS="-D_FORTIFY_SOURCE=2"
++CFLAGS="@CARCHFLAGS@ -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt"
++CXXFLAGS="@CARCHFLAGS@ -mtune=generic -O2 -pipe -fstack-protector-strong -fno-plt"
++LDFLAGS="-Wl,-O1,--sort-common,--as-needed,-z,relro,-z,now"
+ #-- Make Flags: change this for DistCC/SMP systems
+ #MAKEFLAGS="-j2"
+ #-- Debugging flags
+-#DEBUG_CFLAGS="-g"
+-#DEBUG_CXXFLAGS="-g"
++DEBUG_CFLAGS="-g -fvar-tracking-assignments"
++DEBUG_CXXFLAGS="-g -fvar-tracking-assignments"
+ 
+ #########################################################################
+ # BUILD ENVIRONMENT
+@@ -85,7 +87,7 @@ BUILDENV=(!distcc color !ccache check !sign)
+ #-- optipng:    Optimize PNG images with optipng
+ #-- debug:      Add debugging flags as specified in DEBUG_* variables
+ #
+-OPTIONS=(strip docs libtool staticlibs emptydirs zipman purge !upx !optipng !debug)
++OPTIONS=(strip docs !libtool !staticlibs emptydirs zipman purge !upx !optipng !debug)
+ 
+ #-- File integrity checks to use. Valid: md5, sha1, sha256, sha384, sha512
+ INTEGRITY_CHECK=(md5)
+diff --git a/etc/pacman.conf.in b/etc/pacman.conf.in
+index 53071e5..73216a0 100644
+--- a/etc/pacman.conf.in
++++ b/etc/pacman.conf.in
+@@ -75,3 +75,37 @@ CheckSpace
+ #[custom]
+ #SigLevel = Optional TrustAll
+ #Server = file:///home/custompkgs
++
++# The testing repositories are disabled by default. To enable, uncomment the
++# repo name header and Include lines. You can add preferred servers immediately
++# after the header, and they will be used before the default mirrors.
++
++#[testing]
++#Include = /etc/pacman.d/mirrorlist
++
++[core]
++Include = /etc/pacman.d/mirrorlist
++
++[extra]
++Include = /etc/pacman.d/mirrorlist
++
++#[community-testing]
++#Include = /etc/pacman.d/mirrorlist
++
++[community]
++Include = /etc/pacman.d/mirrorlist
++
++# If you want to run 32 bit applications on your x86_64 system,
++# enable the multilib repositories as required here.
++
++#[multilib-testing]
++#Include = /etc/pacman.d/mirrorlist
++
++#[multilib]
++#Include = /etc/pacman.d/mirrorlist
++
++# An example of a custom package repository.  See the pacman manpage for
++# tips on creating your own repositories.
++#[custom]
++#SigLevel = Optional TrustAll
++#Server = file:///home/custompkgs
